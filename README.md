@@ -22,6 +22,10 @@ https://main.d3bj1rlsjcdyx5.amplifyapp.com
 - HTML, CSS and JavaScript
 - Open-Meteo API for weather data
 - AWS Amplify Hosting for deployment
+- ### AI Tools Used
+
+- **Kiro:** Assisted with AI-powered coding and development.
+- **ChatGPT:** Used for project planning, guidance, and problem-solving.
 
 ## 🚀 Run Locally
 
