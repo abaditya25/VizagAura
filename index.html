@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VizagAura — Know your heat. Protect your day.</title>
+  <meta name="description" content="Hyperlocal heat intelligence for Greater Vizag. Real-time heat risk, personalised safety advice, and neighbourhood-level forecasts — no sign-up needed." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       DESIGN TOKENS — VizagAura
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      /* Dark surfaces */
+      --bg:      #07070F;
+      --s1:      #0D0D18;
+      --s2:      #12121F;
+      --s3:      #181826;
+      --s4:      #1E1E2E;
+      --s5:      #252538;
+
+      /* Borders */
+      --b0: rgba(255,255,255,0.05);
+      --b1: rgba(255,255,255,0.09);
+      --b2: rgba(255,255,255,0.14);
+      --b3: rgba(255,255,255,0.22);
+
+      /* Brand coral / orange */
+      --c:    #FF6B35;
+      --cd:   #E5551F;
+      --cl:   #FF8B5E;
+      --cdim: rgba(255,107,53,0.13);
+      --cglo: rgba(255,107,53,0.20);
+
+      /* Amber — heat accent */
+      --amb:    #F59E0B;
+      --amb-bg: rgba(245,158,11,0.10);
+
+      /* Cool teal — neutral weather */
+      --teal:    #22D3EE;
+      --teal-bg: rgba(34,211,238,0.09);
+
+      /* Text */
+      --t1: #F0F0FA;
+      --t2: #8888A8;
+      --t3: #52526A;
+      --t4: #30303E;
+
+      /* Risk */
+      --rl:   #34D399;  --rl-bg: rgba(52,211,153,0.10);
+      --rm:   #FBBF24;  --rm-bg: rgba(251,191,36,0.10);
+      --rh:   #FB923C;  --rh-bg: rgba(251,146,60,0.10);
+      --rx:   #F87171;  --rx-bg: rgba(248,113,113,0.10);
+
+      /* Status */
+      --ok:  #34D399;
+      --err: #F87171;
+      --wrn: #FBBF24;
+
+      /* Geometry */
+      --r1: 6px;  --r2: 10px;  --r3: 14px;
+      --r4: 18px; --r5: 24px;  --r6: 32px;
+
+      /* Shadow */
+      --sh1: 0 1px 3px rgba(0,0,0,.45);
+      --sh2: 0 4px 16px rgba(0,0,0,.55);
+      --sh3: 0 8px 40px rgba(0,0,0,.65);
+
+      /* Layout */
+      --mw: 1120px;
+      --sw: 296px;
+    }
+
+    /* ── Reset ── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Inter',system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--t1);
+      line-height:1.55;min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+    }
+    a{color:inherit;text-decoration:none}
+    button{font-family:inherit}
+
+    /* ── Focus ── */
+    :focus-visible{outline:2px solid var(--c);outline-offset:3px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;
+      margin:-1px;overflow:hidden;clip:rect(0,0,0,0);
+      white-space:nowrap;border:0}
+
+    /* ── Util ── */
+    .caps{font-size:.65rem;font-weight:700;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--t3)}
+
+
+
+    /* Mobile viewport / top-edge overflow fixes */
+    html, body { width:100%; max-width:100%; overflow-x:hidden; }
+    .nav, .hero, .explorer, main, footer { width:100%; max-width:100%; }
+    .nav-inner, .hero-inner, .explorer-inner { width:100%; min-width:0; }
+    .nav-inner { gap:10px; }
+    .wm { min-width:0; }
+    .wm-text { min-width:0; }
+    .wm-tag { white-space:nowrap; }
+    .nav-loc { min-width:0; max-width:42%; flex-shrink:1; }
+    .nav-loc-name { max-width:clamp(64px, 25vw, 140px); }
+    .search-row { width:100%; min-width:0; }
+    .search-wrap { min-width:0; }
+    #cityInput { min-width:0; }
+    @media(max-width:620px) {
+      /* Keep the mobile header intentionally minimal: the selected-locality
+         chip stays in the desktop nav, while mobile avoids a second awkward row. */
+      .nav-inner {
+        height:60px; min-height:60px; flex-wrap:nowrap;
+        padding:0 16px; gap:8px; justify-content:flex-start;
+      }
+      .wm { gap:8px; flex:1 1 auto; min-width:0; }
+      .wm-mark { width:36px; height:36px; border-radius:10px; }
+      .wm-tag { font-size:.52rem; letter-spacing:.035em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .wm-name { font-size:1.02rem; }
+      .nav-loc { display:none !important; }
+      .hero-inner { padding-left:20px; padding-right:20px; }
+      .search-row { gap:8px; }
+      #searchBtn { flex-shrink:0; }
+      .explorer-inner { padding-left:20px; padding-right:20px; }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       TOPBAR
+    ═══════════════════════════════════════════════════════ */
+    .nav{
+      position:sticky;top:0;z-index:400;
+      background:rgba(7,7,15,.93);
+      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--b0);
+    }
+    .nav-inner{
+      max-width:var(--mw);margin:0 auto;
+      height:60px;padding:0 24px;
+      display:flex;align-items:center;
+      justify-content:space-between;gap:16px;
+    }
+
+    /* Wordmark / logo */
+    .wm{display:flex;align-items:center;gap:11px;flex-shrink:0}
+    .wm-mark{
+      width:38px;height:38px;border-radius:10px;
+      background:linear-gradient(135deg,#E5551F 0%,#FF8B5E 100%);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 0 1px rgba(255,107,53,.35),var(--sh1);
+      flex-shrink:0;
+    }
+    /* inline SVG aura / heat-wave icon */
+    .wm-mark svg{width:22px;height:22px}
+    .wm-text{line-height:1}
+    .wm-name{
+      font-size:1.05rem;font-weight:900;
+      letter-spacing:-.025em;color:var(--t1);
+    }
+    .wm-name em{font-style:normal;color:var(--c)}
+    .wm-tag{
+      font-size:.6rem;font-weight:600;letter-spacing:.06em;
+      text-transform:uppercase;color:var(--t3);margin-top:2px;
+    }
+
+    /* Locality chip in nav */
+    .nav-loc{
+      display:flex;align-items:center;gap:6px;
+      padding:5px 12px;
+      background:var(--s3);
+      border:1px solid var(--b1);
+      border-radius:40px;
+      font-size:.78rem;font-weight:600;color:var(--t2);
+      cursor:pointer;transition:border-color .12s,color .12s;
+    }
+    .nav-loc:hover{border-color:var(--c);color:var(--t1)}
+    .nav-loc-dot{
+      width:6px;height:6px;border-radius:50%;
+      background:var(--ok);
+      box-shadow:0 0 4px rgba(52,211,153,.5);
+      animation:liveDot 3s ease-in-out infinite;
+    }
+    @keyframes liveDot{0%,100%{opacity:1}50%{opacity:.4}}
+    @media(prefers-reduced-motion:reduce){.nav-loc-dot{animation:none}}
+    .nav-loc-name{
+      font-size:.78rem;font-weight:700;color:var(--t1);
+      max-width:140px;overflow:hidden;
+      text-overflow:ellipsis;white-space:nowrap;
+    }
+    #navLocWrap{display:none}
+    #navLocWrap.visible{display:flex}
+
+    .nav-links{display:flex;align-items:center;gap:2px}
+    .nav-link{
+      height:34px;padding:0 14px;
+      background:transparent;border:1px solid transparent;
+      border-radius:var(--r2);
+      font-size:.79rem;font-weight:600;color:var(--t3);
+      cursor:pointer;
+      transition:background .12s,color .12s,border-color .12s;
+    }
+    .nav-link:hover{background:var(--s4);color:var(--t1)}
+    @media(max-width:620px){.nav-links{display:none}}
+
+
+    /* ═══════════════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════════════ */
+    .hero{
+      position:relative;overflow:hidden;
+      background:var(--s1);
+      border-bottom:1px solid var(--b0);
+    }
+    /* atmospheric gradient behind headline */
+    .hero-atm{
+      position:absolute;inset:0;pointer-events:none;
+      background:
+        radial-gradient(ellipse 700px 300px at 60% 0%,
+          rgba(255,107,53,.07) 0%,transparent 65%),
+        radial-gradient(ellipse 400px 200px at 10% 80%,
+          rgba(34,211,238,.04) 0%,transparent 60%);
+    }
+    .hero-inner{
+      position:relative;z-index:1;
+      max-width:var(--mw);margin:0 auto;
+      padding:52px 24px 44px;
+    }
+
+    /* Kicker badge */
+    .kicker{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:4px 12px 4px 8px;
+      background:var(--cdim);
+      border:1px solid var(--cglo);
+      border-radius:40px;
+      font-size:.68rem;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--cl);margin-bottom:18px;
+    }
+    .kicker-pulse{
+      width:6px;height:6px;border-radius:50%;
+      background:var(--c);
+      box-shadow:0 0 7px var(--cglo);
+      animation:kpulse 2.4s ease-in-out infinite;
+    }
+    @keyframes kpulse{0%,100%{opacity:1;transform:scale(1)}
+      50%{opacity:.55;transform:scale(.85)}}
+    @media(prefers-reduced-motion:reduce){.kicker-pulse{animation:none}}
+
+    .hero-h1{
+      font-size:clamp(2rem,4.5vw,3.2rem);
+      font-weight:900;letter-spacing:-.035em;
+      color:var(--t1);line-height:1.08;
+      margin-bottom:14px;
+    }
+    .hero-h1 .grad{
+      background:linear-gradient(130deg,#FF8B5E 0%,#FF6B35 45%,#E5551F 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-sub{
+      font-size:.97rem;color:var(--t2);
+      max-width:540px;line-height:1.68;margin-bottom:32px;
+    }
+
+    /* ── Search bar ── */
+    .search-row{
+      display:flex;gap:8px;align-items:stretch;
+      max-width:600px;
+    }
+    .search-wrap{flex:1;position:relative}
+    .search-ico{
+      position:absolute;left:14px;top:50%;
+      transform:translateY(-50%);
+      color:var(--t3);pointer-events:none;font-size:.9rem;
+    }
+    #cityInput{
+      width:100%;height:48px;padding:0 14px 0 42px;
+      background:var(--s4);
+      border:1.5px solid var(--b2);
+      border-radius:var(--r3);
+      color:var(--t1);font-size:.95rem;font-weight:500;
+      outline:none;
+      transition:border-color .14s,box-shadow .14s;
+    }
+    #cityInput::placeholder{color:var(--t3);font-weight:400}
+    #cityInput:focus{
+      border-color:var(--c);
+      box-shadow:0 0 0 3px var(--cdim);
+    }
+    #searchBtn{
+      height:48px;padding:0 22px;
+      background:var(--c);color:#fff;
+      border:none;border-radius:var(--r3);
+      font-size:.88rem;font-weight:700;
+      cursor:pointer;white-space:nowrap;letter-spacing:.01em;
+      box-shadow:0 2px 8px rgba(255,107,53,.4);
+      transition:background .12s,transform .1s,box-shadow .14s;
+    }
+    #searchBtn:hover:not(:disabled){
+      background:var(--cd);
+      box-shadow:0 3px 14px rgba(255,107,53,.5);
+    }
+    #searchBtn:active:not(:disabled){transform:scale(.97)}
+    #searchBtn:disabled{opacity:.42;cursor:not-allowed}
+
+    .search-err{
+      display:none;margin-top:10px;
+      padding:9px 13px;
+      background:rgba(248,113,113,.08);
+      border:1px solid rgba(248,113,113,.25);
+      border-radius:var(--r1);
+      color:#FCA5A5;font-size:.81rem;
+    }
+
+    /* Status strips */
+    .sstrip{
+      display:none;align-items:center;gap:8px;
+      padding:8px 13px;border-radius:var(--r2);
+      font-size:.79rem;font-weight:500;
+      margin-top:12px;max-width:600px;
+    }
+    .sstrip.vis{display:flex}
+    .ssd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .s-live{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:#6EE7B7}
+    .s-live .ssd{background:var(--ok);box-shadow:0 0 0 2px rgba(52,211,153,.22)}
+    .s-err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#FCA5A5}
+    .s-err .ssd{background:var(--err)}
+    .s-demo{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#FDE68A}
+    .s-demo .ssd{background:var(--wrn)}
+
+
+    /* ═══════════════════════════════════════════════════════
+       LOCALITY EXPLORER
+    ═══════════════════════════════════════════════════════ */
+    .explorer{
+      background:var(--s2);
+      border-bottom:1px solid var(--b0);
+    }
+    .explorer-inner{
+      max-width:var(--mw);margin:0 auto;
+      padding:0 24px;
+    }
+    .explorer-top{
+      padding:22px 0 0;
+      display:flex;align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;gap:14px;
+    }
+    .explorer-title{
+      font-size:1rem;font-weight:800;
+      letter-spacing:-.015em;color:var(--t1);
+    }
+    .explorer-desc{
+      font-size:.78rem;color:var(--t2);margin-top:3px;
+    }
+
+    /* Quick search inside explorer */
+    .loc-qsearch{position:relative;flex-shrink:0}
+    .loc-qsearch-ico{
+      position:absolute;left:11px;top:50%;
+      transform:translateY(-50%);
+      color:var(--t3);font-size:.82rem;pointer-events:none;
+    }
+    #locSearch{
+      height:38px;padding:0 13px 0 34px;width:220px;
+      background:var(--s4);border:1.5px solid var(--b1);
+      border-radius:var(--r2);
+      color:var(--t1);font-size:.83rem;outline:none;
+      transition:border-color .14s;
+    }
+    #locSearch::placeholder{color:var(--t3)}
+    #locSearch:focus{border-color:var(--c)}
+    .loc-count{
+      font-size:.72rem;color:var(--t3);
+      margin-top:4px;text-align:right;
+    }
+
+    /* Tabs */
+    .etabs{
+      display:flex;gap:0;
+      border-bottom:1px solid var(--b0);
+      overflow-x:auto;overflow-y:hidden;
+      scrollbar-width:none;-ms-overflow-style:none;
+      margin-top:18px;
+    }
+    .etabs::-webkit-scrollbar{display:none}
+    .etab{
+      flex-shrink:0;
+      height:42px;padding:0 16px;
+      background:transparent;border:none;
+      border-bottom:2px solid transparent;
+      font-size:.79rem;font-weight:600;color:var(--t3);
+      cursor:pointer;white-space:nowrap;
+      transition:color .12s,border-color .12s;
+    }
+    .etab:hover{color:var(--t2)}
+    .etab.on{color:var(--c);border-bottom-color:var(--c)}
+
+    /* Zone panels */
+    .zpanel{display:none;padding:18px 0 20px}
+    .zpanel.on{display:block}
+    .zgrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(152px,1fr));
+      gap:6px;
+    }
+    .lbtn{
+      display:flex;flex-direction:column;
+      padding:11px 13px;
+      background:var(--s4);
+      border:1.5px solid var(--b0);
+      border-radius:var(--r3);
+      cursor:pointer;text-align:left;
+      transition:border-color .13s,background .13s;
+    }
+    .lbtn:hover:not(:disabled){border-color:var(--cglo);background:var(--s5)}
+    .lbtn:disabled{opacity:.55;cursor:not-allowed}
+    .lbtn.sel{border-color:var(--c);background:var(--cdim)}
+    .lbtn:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+    .lb-name{
+      font-size:.83rem;font-weight:700;
+      color:var(--t1);line-height:1.3;
+    }
+    .lb-zone{
+      font-size:.63rem;font-weight:600;
+      letter-spacing:.05em;text-transform:uppercase;
+      color:var(--t3);margin-top:3px;
+    }
+    .lb-note{
+      font-size:.61rem;color:var(--t3);
+      margin-top:2px;font-style:italic;
+    }
+
+    .explorer-foot{
+      font-size:.71rem;color:var(--t3);
+      padding:10px 0 16px;line-height:1.65;
+    }
+
+
+    /* ═══════════════════════════════════════════════════════
+       PAGE BODY — two-column
+    ═══════════════════════════════════════════════════════ */
+    .body{
+      max-width:var(--mw);margin:0 auto;
+      padding:24px 24px 80px;
+      display:grid;
+      grid-template-columns:1fr var(--sw);
+      gap:20px;align-items:start;
+    }
+    .mcol{display:flex;flex-direction:column;gap:18px}
+    .scol{display:flex;flex-direction:column;gap:18px}
+    @media(max-width:880px){
+      .body{grid-template-columns:1fr;padding:18px 16px 60px}
+      .scol{order:2}
+    }
+
+    /* ── Selected locality banner ── */
+    .loc-banner{
+      display:none;
+      background:var(--s3);
+      border:1px solid var(--b1);
+      border-radius:var(--r4);
+      padding:14px 18px;
+      align-items:center;gap:13px;
+    }
+    .loc-banner.vis{display:flex}
+    .lb-pin{
+      width:40px;height:40px;border-radius:50%;
+      background:var(--cdim);border:1px solid var(--cglo);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.1rem;flex-shrink:0;
+    }
+    .lb-info{flex:1}
+    .lb-info-name{
+      font-size:1rem;font-weight:800;
+      letter-spacing:-.015em;color:var(--t1);
+    }
+    .lb-info-sub{font-size:.75rem;color:var(--t2);margin-top:1px}
+    .lb-badge{
+      font-size:.62rem;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase;padding:3px 9px;
+      border-radius:20px;margin-top:4px;
+      align-self:flex-start;display:inline-block;
+    }
+    .lb-badge-gvmc{
+      background:rgba(34,211,238,.1);
+      border:1px solid rgba(34,211,238,.2);
+      color:var(--teal);
+    }
+    .lb-badge-wide{
+      background:rgba(251,191,36,.1);
+      border:1px solid rgba(251,191,36,.2);
+      color:var(--wrn);
+    }
+
+
+    /* ═══════════════════════════════════════════════════════
+       CARDS / PANELS
+    ═══════════════════════════════════════════════════════ */
+    .card{
+      background:var(--s1);
+      border:1px solid var(--b0);
+      border-radius:var(--r5);
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:16px 20px 0;
+      display:flex;align-items:center;
+      justify-content:space-between;
+    }
+    .card-title{
+      font-size:.64rem;font-weight:700;
+      letter-spacing:.09em;text-transform:uppercase;
+      color:var(--t3);
+    }
+    .card-bd{padding:14px 20px 18px}
+
+    /* Picker */
+    #pickerCard{display:none}
+    .picker-hd{
+      font-size:.79rem;font-weight:600;
+      color:var(--t2);margin-bottom:10px;
+      display:flex;align-items:center;gap:7px;
+    }
+    .plist{list-style:none;display:flex;flex-direction:column;gap:5px}
+    .pitem{
+      display:flex;justify-content:space-between;
+      align-items:center;padding:12px 14px;
+      background:var(--s3);
+      border:1.5px solid var(--b0);
+      border-radius:var(--r3);cursor:pointer;
+      transition:border-color .13s,background .13s;
+    }
+    .pitem:hover{border-color:var(--c);background:var(--cdim)}
+    .pitem:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+    .pi-name{font-size:.89rem;font-weight:700;color:var(--t1)}
+    .pi-reg{font-size:.74rem;color:var(--t2);margin-top:1px}
+    .pi-arr{color:var(--t3);font-size:.78rem;flex-shrink:0}
+
+    /* Spinner */
+    .spin-wrap{
+      display:none;padding:56px 20px;
+      align-items:center;justify-content:center;
+      flex-direction:column;gap:14px;
+    }
+    .spin-wrap.vis{display:flex}
+    .spin-ring{
+      width:34px;height:34px;
+      border:2.5px solid var(--s5);
+      border-top-color:var(--c);
+      border-radius:50%;
+      animation:spin .72s linear infinite;
+    }
+    .spin-lbl{font-size:.8rem;color:var(--t2)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Empty state */
+    .empty{padding:48px 24px;text-align:center}
+    .empty-ico{font-size:1.8rem;display:block;margin-bottom:10px;opacity:.4}
+    .empty-h{font-size:.88rem;font-weight:600;color:var(--t2);margin-bottom:4px}
+    .empty-p{font-size:.77rem;color:var(--t3);max-width:220px;margin:0 auto;line-height:1.65}
+
+
+    /* ═══════════════════════════════════════════════════════
+       WEATHER CARD
+    ═══════════════════════════════════════════════════════ */
+    .city-hd{
+      display:flex;align-items:flex-start;
+      justify-content:space-between;gap:10px;
+      padding:18px 20px 0;
+    }
+    .city-hd-name{
+      font-size:1.2rem;font-weight:800;
+      letter-spacing:-.02em;color:var(--t1);
+    }
+    .city-hd-reg{font-size:.77rem;color:var(--t2);margin-top:2px}
+    .city-hd-time{font-size:.67rem;color:var(--t3);white-space:nowrap;flex-shrink:0}
+
+    /* Big temperature display */
+    .temp-hero{
+      padding:20px 20px 0;
+      display:flex;align-items:flex-end;gap:16px;
+      flex-wrap:wrap;
+    }
+    .temp-big{
+      font-size:4.5rem;font-weight:900;
+      letter-spacing:-.06em;line-height:1;
+      color:var(--t1);
+    }
+    .temp-big .deg{
+      font-size:2rem;font-weight:500;
+      color:var(--t2);vertical-align:super;letter-spacing:0;
+    }
+    .temp-side{display:flex;flex-direction:column;gap:4px;padding-bottom:8px}
+    .temp-cond{font-size:1rem;font-weight:700;color:var(--t1)}
+    .temp-feel{font-size:.82rem;color:var(--t2)}
+    .temp-cond-icon{font-size:2.6rem;line-height:1;margin-right:4px}
+
+    /* Stats row */
+    .wx-row{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:1px;background:var(--b0);
+      border-top:1px solid var(--b0);
+      margin-top:16px;
+    }
+    .wx-c{padding:13px 15px;background:var(--s1)}
+    .wx-c-lbl{
+      font-size:.64rem;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--t3);margin-bottom:4px;
+    }
+    .wx-c-val{font-size:1.2rem;font-weight:700;color:var(--t1)}
+    .wx-c-unit{font-size:.73rem;color:var(--t2);font-weight:400}
+    .wx-c-sub{font-size:.67rem;color:var(--t3);margin-top:2px}
+
+    .precip-note{
+      padding:7px 20px;font-size:.74rem;
+      color:var(--t2);border-top:1px solid var(--b0);
+    }
+    .attr-row{
+      display:flex;align-items:center;justify-content:flex-end;gap:5px;
+      padding:7px 20px 9px;
+      font-size:.67rem;color:var(--t3);
+      border-top:1px solid var(--b0);
+    }
+    .attr-dot{width:5px;height:5px;border-radius:50%;background:var(--ok)}
+
+    /* Forecast */
+    .fc{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:1px;background:var(--b0);
+      border-top:1px solid var(--b0);
+    }
+    .fc-c{background:var(--s1);padding:13px 8px;text-align:center}
+    .fc-d{
+      font-size:.65rem;font-weight:700;
+      letter-spacing:.06em;text-transform:uppercase;
+      color:var(--t3);margin-bottom:5px;
+    }
+    .fc-i{font-size:1.3rem;margin-bottom:4px}
+    .fc-hi{font-size:.87rem;font-weight:700;color:var(--t1)}
+    .fc-lo{font-size:.73rem;color:var(--t3);margin-top:2px}
+    .fc-r{
+      display:inline-flex;align-items:center;gap:2px;
+      margin-top:4px;font-size:.67rem;
+      color:var(--teal);font-weight:600;
+    }
+
+
+    /* ═══════════════════════════════════════════════════════
+       RISK CARD
+    ═══════════════════════════════════════════════════════ */
+    .rbadge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 14px;border-radius:40px;
+      font-size:.84rem;font-weight:700;letter-spacing:.02em;
+    }
+    .rdot{width:8px;height:8px;border-radius:50%}
+    .rbadge-LOW     {background:var(--rl-bg);color:var(--rl);border:1.5px solid rgba(52,211,153,.28)}
+    .rbadge-MODERATE{background:var(--rm-bg);color:var(--rm);border:1.5px solid rgba(251,191,36,.28)}
+    .rbadge-HIGH    {background:var(--rh-bg);color:var(--rh);border:1.5px solid rgba(251,146,60,.28)}
+    .rbadge-EXTREME {background:var(--rx-bg);color:var(--rx);border:1.5px solid rgba(248,113,113,.28)}
+    .rdot-LOW    {background:var(--rl)}
+    .rdot-MODERATE{background:var(--rm)}
+    .rdot-HIGH   {background:var(--rh)}
+    .rdot-EXTREME{background:var(--rx);
+      box-shadow:0 0 7px rgba(248,113,113,.6);
+      animation:rpulse 1.8s ease-in-out infinite}
+    @keyframes rpulse{0%,100%{opacity:1}50%{opacity:.35}}
+    @media(prefers-reduced-motion:reduce){.rdot-EXTREME{animation:none}}
+
+    .r-mrow{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:1px;background:var(--b0);
+      border:1px solid var(--b0);
+      border-radius:var(--r2);overflow:hidden;
+      margin:14px 0;
+    }
+    .r-mc{background:var(--s3);padding:11px 13px}
+    .r-mc-lbl{
+      font-size:.63rem;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--t3);margin-bottom:4px;
+    }
+    .r-mc-val{font-size:1.1rem;font-weight:700;color:var(--t1)}
+    .r-mc-unit{font-size:.7rem;color:var(--t2);font-weight:400}
+    .r-mc-note{font-size:.64rem;color:var(--t3);margin-top:2px}
+
+    .r-ctx{
+      font-size:.79rem;color:var(--t2);
+      line-height:1.7;margin-bottom:14px;
+      padding:10px 13px;
+      background:var(--s3);
+      border-left:2px solid var(--b2);
+      border-radius:0 var(--r1) var(--r1) 0;
+    }
+    .r-disc{
+      padding:10px 13px;
+      background:var(--s3);
+      border:1px solid var(--b0);
+      border-radius:var(--r2);
+      font-size:.71rem;color:var(--t3);line-height:1.65;
+    }
+    .r-disc strong{color:var(--t2)}
+
+
+    /* ═══════════════════════════════════════════════════════
+       PROFILE SELECTOR
+    ═══════════════════════════════════════════════════════ */
+    .plist-s{display:flex;flex-direction:column;gap:4px}
+    .profile-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+    .profile-options .pbtn{min-width:0;padding:9px 10px;gap:8px}
+    .profile-options .pbtn-lbl{font-size:.78rem;line-height:1.25}
+    @media(max-width:720px){.profile-options{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-options .pbtn:last-child{grid-column:1/-1}}
+    .pbtn{
+      display:flex;align-items:center;gap:10px;
+      width:100%;padding:9px 12px;
+      background:transparent;border:1.5px solid transparent;
+      border-radius:var(--r3);cursor:pointer;text-align:left;
+      transition:background .12s,border-color .12s;color:var(--t2);
+    }
+    .pbtn:hover{background:var(--s4);color:var(--t1)}
+    .pbtn.on{background:var(--cdim);border-color:var(--c);color:var(--t1)}
+    .pbtn:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+    .pbtn-ico{
+      width:32px;height:32px;background:var(--s4);
+      border-radius:var(--r1);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1rem;flex-shrink:0;
+      transition:background .12s;
+    }
+    .pbtn.on .pbtn-ico{background:rgba(255,107,53,.12)}
+    .pbtn-lbl{font-size:.83rem;font-weight:600}
+
+
+    /* ═══════════════════════════════════════════════════════
+       RECOMMENDATIONS
+    ═══════════════════════════════════════════════════════ */
+    .rec-hdr{
+      display:flex;align-items:baseline;
+      justify-content:space-between;gap:8px;margin-bottom:12px;
+    }
+    .rec-for{font-size:.76rem;font-weight:600;color:var(--t2)}
+    .rec-who{font-size:.76rem;font-weight:700;color:var(--cl)}
+    .rlist{list-style:none;display:flex;flex-direction:column;gap:7px}
+    .ritem{
+      display:grid;grid-template-columns:34px 1fr;
+      gap:0 9px;align-items:start;
+      padding:11px 13px;
+      background:var(--s3);
+      border:1px solid var(--b0);
+      border-radius:var(--r3);
+      transition:border-color .12s;
+    }
+    .ritem:hover{border-color:var(--b1)}
+    .rico{
+      width:34px;height:34px;background:var(--s4);
+      border-radius:var(--r1);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1rem;grid-row:span 2;
+    }
+    .rtitle{font-size:.8rem;font-weight:700;color:var(--t1);margin-bottom:3px}
+    .rbody{font-size:.77rem;color:var(--t2);line-height:1.55}
+
+
+    /* ═══════════════════════════════════════════════════════
+       ABOUT PANEL
+    ═══════════════════════════════════════════════════════ */
+    .about{
+      background:var(--s1);
+      border:1px solid var(--b0);
+      border-radius:var(--r5);
+      padding:18px 20px;
+    }
+    .about-title{
+      font-size:.64rem;font-weight:700;
+      letter-spacing:.09em;text-transform:uppercase;
+      color:var(--t3);margin-bottom:12px;
+    }
+    .about-body{font-size:.78rem;color:var(--t2);line-height:1.72}
+    .about-body a{color:var(--cl)}
+    .about-body a:hover{text-decoration:underline}
+    .adiv{height:1px;background:var(--b0);margin:12px 0}
+    .asrcs{display:flex;flex-direction:column;gap:6px}
+    .asrc{display:flex;align-items:flex-start;gap:8px;font-size:.73rem;color:var(--t3)}
+    .asrc-dot{width:5px;height:5px;border-radius:50%;background:var(--b2);flex-shrink:0;margin-top:5px}
+    .cov-note{
+      background:var(--teal-bg);
+      border:1px solid rgba(34,211,238,.18);
+      border-radius:var(--r2);padding:10px 14px;
+      font-size:.73rem;color:var(--teal);
+      line-height:1.65;margin-top:12px;
+    }
+    .cov-note strong{color:#67E8F9}
+
+
+    /* ═══════════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════════ */
+    .footer{border-top:1px solid var(--b0);padding:24px}
+    .footer-inner{
+      max-width:var(--mw);margin:0 auto;
+      display:flex;flex-direction:column;align-items:center;gap:7px;
+    }
+    .footer-t{font-size:.73rem;color:var(--t3);text-align:center;line-height:1.65}
+    .footer-t a{color:var(--t2)}
+    .footer-t a:hover{color:var(--cl)}
+    .footer-w{font-size:.69rem;color:var(--t3);max-width:520px;text-align:center;line-height:1.65}
+
+  
+    /* Clean search-first locality picker: show results only when the user searches. */
+    .explorer { display:none; }
+    .explorer.search-open { display:block; }
+    .explorer-inner { padding-top:16px; }
+    .explorer-top { padding-top:0; }
+    .explorer-title { font-size:1rem; }
+    .etabs, #zp-central, #zp-north, #zp-south, #zp-west, #zp-wider, .explorer-foot { display:none !important; }
+    #zp-all.zpanel { padding:12px 0 18px; }
+    #grid-all.zgrid { grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; }
+    .explorer.search-open .explorer-desc { margin-top:4px; }
+    @media (max-width:600px) {
+      .explorer-inner { padding-left:20px; padding-right:20px; }
+      #grid-all.zgrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .lbtn { min-width:0; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOPBAR ══════════════════════════════════════ -->
+<header class="nav" role="banner">
+  <div class="nav-inner">
+
+    <!-- Wordmark -->
+    <a href="#" class="wm" aria-label="VizagAura home">
+      <div class="wm-mark" aria-hidden="true">
+        <!-- Heat-wave / aura icon in SVG -->
+        <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="11" cy="11" r="4" fill="white" fill-opacity=".95"/>
+          <path d="M11 2v2M11 18v2M2 11h2M18 11h2
+                   M4.22 4.22l1.42 1.42M16.36 16.36l1.42 1.42
+                   M4.22 17.78l1.42-1.42M16.36 5.64l1.42-1.42"
+                stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="11" cy="11" r="7" stroke="white" stroke-width="1"
+                  stroke-dasharray="2 2" stroke-opacity=".5"/>
+        </svg>
+      </div>
+      <div class="wm-text">
+        <div class="wm-name">Vizag<em>Aura</em></div>
+        <div class="wm-tag">Heat Intelligence · Greater Vizag</div>
+      </div>
+    </a>
+
+    <!-- Live locality chip -->
+    <div id="navLocWrap" class="nav-loc" onclick="scrollToExplorer()" aria-label="Currently selected locality" role="button" tabindex="0">
+      <span class="nav-loc-dot" aria-hidden="true"></span>
+      <span class="nav-loc-name" id="navLocName">–</span>
+    </div>
+
+    <!-- Nav links -->
+    <nav class="nav-links" aria-label="Page sections">
+      <button class="nav-link" onclick="scrollToExplorer()" type="button">Localities</button>
+      <button class="nav-link" onclick="scrollToWeather()"  type="button">Weather</button>
+      <button class="nav-link" onclick="scrollToRisk()"     type="button">Risk</button>
+    </nav>
+
+  </div>
+</header>
+
+
+<!-- ══════════ HERO ════════════════════════════════════════ -->
+<section class="hero" aria-labelledby="heroH1">
+  <div class="hero-atm" aria-hidden="true"></div>
+  <div class="hero-inner">
+
+    <div class="kicker" aria-hidden="true">
+      <span class="kicker-pulse"></span>
+      Live · Hyperlocal · Open data
+    </div>
+
+    <h1 class="hero-h1" id="heroH1">
+      Know your heat.<br><span class="grad">Protect your day.</span>
+    </h1>
+    <p class="hero-sub">
+      Hyperlocal heat intelligence for Greater Visakhapatnam.
+      Live weather, personalised risk assessment, and practical safety advice —
+      right down to your neighbourhood.
+    </p>
+
+    <!-- Locality-only search: matches the approved VizagAura dataset -->
+    <div class="search-row" role="search" aria-label="Search supported Vizag localities">
+      <div class="search-wrap">
+        <span class="search-ico" aria-hidden="true">🔍</span>
+        <input id="cityInput" type="search"
+          placeholder="Search a Vizag locality… e.g. MVP Colony"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+          aria-label="Search a supported Vizag locality"
+          aria-describedby="searchHint"
+          oninput="filterLocs(this.value)"/>
+      </div>
+      <button id="searchBtn" onclick="startSearch()" type="button"
+        aria-label="Find locality">Find Locality</button>
+    </div>
+    <p id="searchHint" class="sr-only">
+      Enter a supported Greater Vizag locality and press Find Locality.
+    </p>
+
+    <div class="search-err" id="errorMsg" role="alert" aria-live="polite"></div>
+
+    <div class="sstrip s-live"  id="bannerLive"  role="status" aria-live="polite">
+      <span class="ssd"></span>
+      <strong>Live data</strong>&nbsp;— Open-Meteo forecast model · Updated hourly
+    </div>
+    <div class="sstrip s-err"  id="bannerError" role="alert" aria-live="assertive">
+      <span class="ssd"></span>
+      <strong>Live data unavailable</strong>&nbsp;— Check your internet connection
+    </div>
+    <div class="sstrip s-demo" id="bannerDemo"  role="status" aria-live="polite">
+      <span class="ssd"></span>
+      <strong>Demo mode</strong>&nbsp;— Simulated values shown
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════ LOCALITY EXPLORER ══════════════════════════ -->
+<section class="explorer" id="explorerSec" aria-labelledby="explTitle">
+  <div class="explorer-inner">
+
+    <div class="explorer-top">
+      <div>
+        <h2 class="explorer-title" id="explTitle">Explore Greater Vizag</h2>
+        <p class="explorer-desc">
+          Select a supported neighbourhood to check its available forecast.
+        </p>
+      </div>
+      <div class="loc-count" id="locCount" aria-live="polite"></div>
+    </div>
+
+    <!-- Zone tabs -->
+    <div class="etabs" role="tablist" aria-label="Browse localities by zone">
+      <button class="etab on" id="tab-all"     role="tab" aria-selected="true"  aria-controls="zp-all"     onclick="switchTab('all')">All</button>
+      <button class="etab"    id="tab-central" role="tab" aria-selected="false" aria-controls="zp-central" onclick="switchTab('central')">Central &amp; East</button>
+      <button class="etab"    id="tab-north"   role="tab" aria-selected="false" aria-controls="zp-north"   onclick="switchTab('north')">North &amp; Coast</button>
+      <button class="etab"    id="tab-south"   role="tab" aria-selected="false" aria-controls="zp-south"   onclick="switchTab('south')">South &amp; Industrial</button>
+      <button class="etab"    id="tab-west"    role="tab" aria-selected="false" aria-controls="zp-west"    onclick="switchTab('west')">West &amp; Outer</button>
+      <button class="etab"    id="tab-wider"   role="tab" aria-selected="false" aria-controls="zp-wider"   onclick="switchTab('wider')">Wider Region</button>
+    </div>
+
+    <!-- Panels filled by JS -->
+    <div class="zpanel on" id="zp-all"     role="tabpanel" aria-labelledby="tab-all"    ><div class="zgrid" id="grid-all"    ></div></div>
+    <div class="zpanel"    id="zp-central" role="tabpanel" aria-labelledby="tab-central"><div class="zgrid" id="grid-central"></div></div>
+    <div class="zpanel"    id="zp-north"   role="tabpanel" aria-labelledby="tab-north"  ><div class="zgrid" id="grid-north"  ></div></div>
+    <div class="zpanel"    id="zp-south"   role="tabpanel" aria-labelledby="tab-south"  ><div class="zgrid" id="grid-south"  ></div></div>
+    <div class="zpanel"    id="zp-west"    role="tabpanel" aria-labelledby="tab-west"   ><div class="zgrid" id="grid-west"   ></div></div>
+    <div class="zpanel"    id="zp-wider"   role="tabpanel" aria-labelledby="tab-wider"  ><div class="zgrid" id="grid-wider"  ></div></div>
+
+    <p class="explorer-foot">
+      📍 Locality coverage is limited to the approved dataset; entries under review cannot fetch weather.
+      Weather shown is a forecast-model estimate for each grid point — not a local sensor reading.
+      Localities outside GVMC are labelled "Wider Region".
+    </p>
+
+  </div>
+</section>
+
+
+<!-- ══════════ PAGE BODY ═══════════════════════════════════ -->
+<div class="body">
+
+  <!-- ── Main column ───────────────────────────────── -->
+  <main class="mcol" role="main" id="wxSection">
+
+    <!-- Locality banner -->
+    <div class="loc-banner" id="locBanner" aria-live="polite">
+      <div class="lb-pin" aria-hidden="true">📍</div>
+      <div class="lb-info">
+        <div class="lb-info-name" id="lbName">—</div>
+        <div class="lb-info-sub"  id="lbSub">—</div>
+        <span class="lb-badge"    id="lbBadge">GVMC</span>
+      </div>
+    </div>
+
+    <!-- Profile selector: choose before reading the assessment -->
+    <div class="card" aria-label="Select your profile">
+      <div class="card-hd"><span class="card-title">Your Profile</span></div>
+      <div class="card-bd">
+        <div class="plist-s profile-options" role="radiogroup" aria-label="Select your profile">
+          <button class="pbtn on" onclick="selectProfile('general')" data-profile="general" role="radio" aria-checked="true"  type="button">
+            <span class="pbtn-ico" aria-hidden="true">🌍</span>
+            <span class="pbtn-lbl">General Public</span>
+          </button>
+          <button class="pbtn" onclick="selectProfile('student')"  data-profile="student"  role="radio" aria-checked="false" type="button">
+            <span class="pbtn-ico" aria-hidden="true">🎒</span>
+            <span class="pbtn-lbl">Student</span>
+          </button>
+          <button class="pbtn" onclick="selectProfile('outdoor')"  data-profile="outdoor"  role="radio" aria-checked="false" type="button">
+            <span class="pbtn-ico" aria-hidden="true">⛏️</span>
+            <span class="pbtn-lbl">Outdoor Worker</span>
+          </button>
+          <button class="pbtn" onclick="selectProfile('elderly')"  data-profile="elderly"  role="radio" aria-checked="false" type="button">
+            <span class="pbtn-ico" aria-hidden="true">🧓</span>
+            <span class="pbtn-lbl">Elderly Person</span>
+          </button>
+          <button class="pbtn" onclick="selectProfile('child')"    data-profile="child"    role="radio" aria-checked="false" type="button">
+            <span class="pbtn-ico" aria-hidden="true">👶</span>
+            <span class="pbtn-lbl">Child / Parent</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Disambiguation picker -->
+    <div id="pickerCard" class="card" aria-label="Select a city">
+      <div class="card-hd"><span class="card-title">Multiple locations found</span></div>
+      <div class="card-bd">
+        <p class="picker-hd"><span aria-hidden="true">📍</span> Select the location you meant:</p>
+        <ul class="plist" id="pickerList" role="listbox" aria-label="Location options"></ul>
+      </div>
+    </div>
+
+    <!-- Weather card -->
+    <div class="card" id="weatherCard" aria-label="Current weather conditions">
+      <div class="spin-wrap" id="spinnerWrap">
+        <div class="spin-ring" role="progressbar" aria-label="Loading weather data"></div>
+        <span class="spin-lbl">Fetching weather data…</span>
+      </div>
+      <div id="weatherContent">
+        <div class="empty">
+          <span class="empty-ico" aria-hidden="true">🌤️</span>
+          <p class="empty-h">No location selected</p>
+          <p class="empty-p">Pick a verified neighbourhood above or search for a supported Vizag locality.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk card -->
+    <div class="card" id="riskCard" aria-label="Heat risk assessment" aria-live="polite">
+      <div class="card-hd"><span class="card-title">Heat Risk Assessment</span></div>
+      <div class="card-bd" id="riskContent">
+        <div class="empty" style="padding:28px 0 10px">
+          <span class="empty-ico" aria-hidden="true">📊</span>
+          <p class="empty-h">No assessment yet</p>
+          <p class="empty-p">Select a location to calculate your heat risk.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations card -->
+    <div class="card" id="recCard" aria-label="Personalised safety recommendations" aria-live="polite">
+      <div class="card-hd"><span class="card-title">Safety Recommendations</span></div>
+      <div class="card-bd">
+        <div class="rec-hdr">
+          <span class="rec-for">For:</span>
+          <span class="rec-who" id="profileLabel">General Public</span>
+        </div>
+        <ul class="rlist" id="recList" aria-label="Safety recommendations"></ul>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Side column ───────────────────────────────── -->
+  <aside class="scol" aria-label="About and data sources">
+
+
+    <!-- About -->
+    <div class="about" role="complementary" aria-label="About VizagAura">
+      <p class="about-title">About VizagAura</p>
+      <div class="about-body">
+        <p>VizagAura delivers hyperlocal heat intelligence to residents of Greater Visakhapatnam. Built for the AWS Environmental Hackathon.</p>
+        <div class="adiv"></div>
+        <p style="font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Data sources</p>
+        <div class="asrcs">
+          <div class="asrc"><span class="asrc-dot"></span><span>Weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> — free, no key</span></div>
+          <div class="asrc"><span class="asrc-dot"></span><span>Coordinates: <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a></span></div>
+          <div class="asrc"><span class="asrc-dot"></span><span>Municipal data: <a href="https://gvmc.gov.in/" target="_blank" rel="noopener">GVMC</a> ward records (public domain)</span></div>
+          <div class="asrc"><span class="asrc-dot"></span><span>Risk bands: App-defined public-communication thresholds (see disclaimer)</span></div>
+        </div>
+        <div class="adiv"></div>
+        <p style="color:var(--t3);font-size:.71rem;line-height:1.65">
+          <strong style="color:var(--t2)">Indicative screening only.</strong>
+          Not a medical assessment or official heat-health alert.
+          Weather is a forecast-model estimate — not a local sensor reading.
+          Always follow your local health authority.
+        </p>
+        <div class="cov-note">
+          <strong>Coverage note</strong><br>
+          Weather is available only for localities marked verified in the current dataset.
+          Some entries remain unavailable while their coordinates or boundary status are reviewed.
+          Forecast values are estimates for stored map points, not neighbourhood sensor readings.
+        </div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+
+<!-- ══════════ FOOTER ══════════════════════════════════════ -->
+<footer class="footer" role="contentinfo">
+  <div class="footer-inner">
+    <p class="footer-t">
+      VizagAura · Built for the AWS Environmental Hackathon ·
+      Weather by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> ·
+      Localities via <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> ·
+      GVMC data: <a href="https://gvmc.gov.in/" target="_blank" rel="noopener">gvmc.gov.in</a>
+    </p>
+    <p class="footer-w">
+      General public-safety information only. Not a medical assessment or official heatwave warning.
+      Weather is a model estimate, not a local sensor reading.
+      Always follow guidance from your local health or emergency authority.
+    </p>
+  </div>
+</footer>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════
+//  LOCALITY DATASET  v2 — Audited 2026-10-10
+//
+//  status: 'verified'     → OSM/GVMC source confirmed; weather enabled
+//  status: 'needs_review' → coord or boundary unconfirmed; weather BLOCKED
+//
+//  inGVMC classification based on GVMC 10-zone structure (2017 expansion):
+//  Zone 1 Bhimili · Zone 2 Madhurawada · Zone 3 East · Zone 4 South
+//  Zone 5 North  · Zone 6 West         · Zone 7 Gajuwaka
+//  Zone 8 Aganampudi · Zone 9 Anakapalli · Zone 10 Pendurthi
+//
+//  Coord source: OSM Nominatim (nominatim.openstreetmap.org), Wikipedia,
+//  and GVMC ward records. Corrections listed in LOCALITY_VERIFICATION_REPORT.md
+// ════════════════════════════════════════════════════════
+const LOCS = [
+  // ── Central & East ─────────────────────────────────
+  {id:'mvp',          name:'MVP Colony',           aliases:['mvp colony','madhuranagar'],       lat:17.7340,lon:83.3300,zone:'central',inGVMC:true, status:'verified'},
+  {id:'seetham',      name:'Seethammadhara',        aliases:['seethammadhara nagar'],            lat:17.7450,lon:83.3160,zone:'central',inGVMC:true, status:'verified'},
+  {id:'maddila',      name:'Maddilapalem',          aliases:[],                                  lat:17.7390,lon:83.3080,zone:'central',inGVMC:true, status:'verified'},
+  {id:'dwaraka',      name:'Dwaraka Nagar',         aliases:['dwarkanagar'],                     lat:17.7260,lon:83.3170,zone:'central',inGVMC:true, status:'verified'},
+  {id:'siripuram',    name:'Siripuram',             aliases:[],                                  lat:17.7190,lon:83.3140,zone:'central',inGVMC:true, status:'verified'},
+  {id:'jagadamba',    name:'Jagadamba Junction',    aliases:['jagadamba'],                       lat:17.7154,lon:83.3109,zone:'central',inGVMC:true, status:'verified'},
+  {id:'beach',        name:'Beach Road',            aliases:['rk beach','ramakrishna beach','rkb'], lat:17.7118,lon:83.3265,zone:'central',inGVMC:true, status:'verified'},
+  {id:'maharani',     name:'Maharanipeta',          aliases:['maharani peta'],                   lat:17.7107,lon:83.3025,zone:'central',inGVMC:true, status:'verified'},
+  {id:'asilmetta',    name:'Asilmetta',             aliases:['asilmetta junction'],              lat:17.7248,lon:83.3119,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7300/83.3240):
+  {id:'dabagardens',  name:'Dabagardens',           aliases:['daba gardens'],                    lat:17.7172,lon:83.2986,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7560/83.3370):
+  {id:'lawsons',      name:'Lawsons Bay Colony',    aliases:['lawsons bay'],                     lat:17.7317,lon:83.3396,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7400/83.3170):
+  {id:'akkayyapalem', name:'Akkayyapalem',          aliases:['akkayya palem'],                   lat:17.7382,lon:83.2992,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7222/83.3183):
+  {id:'allipuram',    name:'Allipuram',             aliases:[],                                  lat:17.7188,lon:83.2953,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7295/83.3085):
+  {id:'gnanapuram',   name:'Gnanapuram',            aliases:[],                                  lat:17.7204,lon:83.2855,zone:'central',inGVMC:true, status:'verified'},
+  // Coords corrected from OSM (was 17.7170/83.3070):
+  {id:'thatichetla',  name:'Thatichetlapalem',      aliases:['thatichetla palem'],               lat:17.7358,lon:83.2925,zone:'central',inGVMC:true, status:'verified'},
+  // OSM: no node found; coords estimated; weather blocked
+  {id:'kobbari',      name:'Kobbari Palem',         aliases:['kobbaripalem'],                    lat:17.7420,lon:83.3220,zone:'central',inGVMC:true, status:'needs_review'},
+  // OSM: no node found; coords estimated; weather blocked
+  {id:'jaipur',       name:'Jaipur Colony',         aliases:['jaipur vizag'],                    lat:17.7231,lon:83.2981,zone:'central',inGVMC:true, status:'needs_review'},
+
+  // ── North & Coast ──────────────────────────────────
+  {id:'yendada',      name:'Yendada',               aliases:['yendada colony'],                  lat:17.7770,lon:83.3760,zone:'north',inGVMC:true, status:'verified'},
+  {id:'rushikonda',   name:'Rushikonda',             aliases:['rushikonda beach'],                lat:17.7838,lon:83.3971,zone:'north',inGVMC:true, status:'verified'},
+  {id:'sagarnagar',   name:'Sagar Nagar',            aliases:['sagar nagar colony'],              lat:17.7665,lon:83.3665,zone:'north',inGVMC:true, status:'verified'},
+  {id:'madhurawada',  name:'Madhurawada',            aliases:['madhurawada colony'],              lat:17.7856,lon:83.4135,zone:'north',inGVMC:true, status:'verified'},
+  {id:'pmpalem',      name:'PM Palem',               aliases:['pm colony'],                       lat:17.7900,lon:83.4210,zone:'north',inGVMC:true, status:'verified'},
+  {id:'kommadi',      name:'Kommadi',                aliases:[],                                  lat:17.7975,lon:83.4338,zone:'north',inGVMC:true, status:'verified'},
+  // GVMC Zone 1 (Bhimili) — boundary corrected; was inGVMC:false (error):
+  {id:'bheemili',     name:'Bheemunipatnam',         aliases:['bheemili','bheemunipatnam'],        lat:17.8911,lon:83.4553,zone:'north',inGVMC:true, status:'verified'},
+  {id:'anandapuram',  name:'Anandapuram',            aliases:['ananda puram'],                    lat:17.8250,lon:83.4356,zone:'north',inGVMC:true, status:'verified'},
+  {id:'kapuluppada',  name:'Kapuluppada',            aliases:[],                                  lat:17.8060,lon:83.4480,zone:'north',inGVMC:true, status:'verified'},
+  {id:'narava',       name:'Narava',                 aliases:['narava junction'],                 lat:17.8021,lon:83.4243,zone:'north',inGVMC:true, status:'verified'},
+  {id:'kailasapuram', name:'Kailasapuram',           aliases:['kailasa puram'],                   lat:17.7700,lon:83.3465,zone:'north',inGVMC:true, status:'verified'},
+  // OSM result found but coords differ; manual confirmation recommended:
+  {id:'mulagada',     name:'Mulagada',               aliases:[],                                  lat:17.8155,lon:83.4325,zone:'north',inGVMC:true, status:'needs_review'},
+  // Coords corrected (was 17.8510/83.4454 — ~9km error); GVMC boundary unclear:
+  {id:'thagarapu',    name:'Thagarapuvalasa',        aliases:['thagarapuvalasa'],                 lat:17.9311,lon:83.4289,zone:'north',inGVMC:false, status:'needs_review'},
+
+  // ── South & Industrial ──────────────────────────────
+  {id:'gajuwaka',     name:'Gajuwaka',               aliases:[],                                  lat:17.6760,lon:83.2120,zone:'south',inGVMC:true, status:'verified'},
+  {id:'malkapuram',   name:'Malkapuram',             aliases:['malka puram'],                     lat:17.6860,lon:83.2230,zone:'south',inGVMC:true, status:'verified'},
+  {id:'sheela',       name:'Sheela Nagar',           aliases:['sheela nagar colony'],             lat:17.6790,lon:83.2210,zone:'south',inGVMC:true, status:'verified'},
+  {id:'kurmannapalem',name:'Kurmannapalem',          aliases:['kurmanapalam'],                    lat:17.6881,lon:83.2100,zone:'south',inGVMC:true, status:'verified'},
+  {id:'duvvada',      name:'Duvvada',                aliases:['duvvada railway station'],         lat:17.7040,lon:83.1740,zone:'south',inGVMC:true, status:'verified'},
+  {id:'pedagantyada', name:'Pedagantyada',           aliases:['pedagantayada'],                   lat:17.6685,lon:83.1982,zone:'south',inGVMC:true, status:'verified'},
+  // GVMC Zone 8:
+  {id:'aganampudi',   name:'Aganampudi',             aliases:[],                                  lat:17.6540,lon:83.1870,zone:'south',inGVMC:true, status:'verified'},
+  {id:'autonagar',    name:'Auto Nagar',             aliases:['autonagar vizag'],                 lat:17.6920,lon:83.2290,zone:'south',inGVMC:true, status:'verified'},
+  // Outside GVMC; industrial area; confirmed via OSM:
+  {id:'parawada',     name:'Parawada',               aliases:['parawada industrial'],             lat:17.6400,lon:83.1390,zone:'south',inGVMC:false,status:'verified'},
+  {id:'bapuji',       name:'Bapuji Nagar',           aliases:['bapujinagar'],                     lat:17.6730,lon:83.2230,zone:'south',inGVMC:true, status:'verified'},
+  // OSM: no result; coords unverifiable; weather blocked:
+  {id:'mvnpuram',     name:'MVN Puram',              aliases:['mvn puram'],                       lat:17.6700,lon:83.2150,zone:'south',inGVMC:true, status:'needs_review'},
+  // OSM: no result; coords unverifiable; weather blocked:
+  {id:'suryanagar',   name:'Surya Nagar Colony',     aliases:['surya nagar','suryanagar colony'], lat:17.6810,lon:83.2180,zone:'south',inGVMC:true, status:'needs_review'},
+
+  // ── West & Outer ────────────────────────────────────
+  {id:'gopalapatnam', name:'Gopalapatnam',           aliases:['gopalapatnam colony'],             lat:17.7570,lon:83.2760,zone:'west', inGVMC:true, status:'verified'},
+  // GVMC Zone 10; confirmed:
+  {id:'pendurthi',    name:'Pendurthi',              aliases:[],                                  lat:17.8310,lon:83.2490,zone:'west', inGVMC:true, status:'verified'},
+  {id:'simhachalam',  name:'Simhachalam',            aliases:['simhachalam temple'],              lat:17.7680,lon:83.2530,zone:'west', inGVMC:true, status:'verified'},
+  {id:'sujathanagar', name:'Sujatha Nagar',          aliases:['sujatha nagar colony'],            lat:17.7512,lon:83.2820,zone:'west', inGVMC:true, status:'verified'},
+  {id:'marripalem',   name:'Marripalem',             aliases:['marripalem vuda layout'],          lat:17.7441,lon:83.2781,zone:'west', inGVMC:true, status:'verified'},
+  // OSM: no result; weather blocked:
+  {id:'chinagadili',  name:'Chinagadili',            aliases:[],                                  lat:17.7618,lon:83.2620,zone:'west', inGVMC:true, status:'needs_review'},
+  // OSM: no result; weather blocked:
+  {id:'gajularega',   name:'Gajularega',             aliases:[],                                  lat:17.7800,lon:83.2380,zone:'west', inGVMC:true, status:'needs_review'},
+  // OSM: no result; weather blocked:
+  {id:'venkojipalem', name:'Venkojipalem',           aliases:['venkoji palem'],                   lat:17.7560,lon:83.2680,zone:'west', inGVMC:true, status:'needs_review'},
+  // Outside GVMC; panchayat; confirmed via OSM:
+  {id:'sabbavaram',   name:'Sabbavaram',             aliases:[],                                  lat:17.7921,lon:83.2192,zone:'west', inGVMC:false,status:'verified'},
+  // Coords corrected from OSM (was 17.7740/83.2410):
+  {id:'adavivaram',   name:'Adavivaram',             aliases:[],                                  lat:17.7822,lon:83.2659,zone:'west', inGVMC:true, status:'verified'},
+
+  // ── Wider Metropolitan Region ────────────────────────
+  // GVMC Zone 9 — boundary corrected; was inGVMC:false (error):
+  {id:'anakapalli',   name:'Anakapalli',             aliases:['anakapalle'],                      lat:17.6915,lon:82.9985,zone:'wider',inGVMC:true, status:'verified'},
+  {id:'atchutapuram', name:'Atchutapuram',           aliases:[],                                  lat:17.6130,lon:82.9970,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'yelamanchili', name:'Yelamanchili',           aliases:['yelamanchali'],                    lat:17.5531,lon:82.8641,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'munagapaka',   name:'Munagapaka',             aliases:[],                                  lat:17.7200,lon:83.1000,zone:'wider',inGVMC:false,status:'verified'},
+  // OSM: no result; coords estimated; weather blocked:
+  {id:'makavarapalem',name:'Makavarapalem',          aliases:[],                                  lat:17.6900,lon:83.0560,zone:'wider',inGVMC:false,status:'needs_review'},
+  {id:'chodavaram',   name:'Chodavaram',             aliases:[],                                  lat:17.8540,lon:82.9330,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'narsipatnam',  name:'Narsipatnam',            aliases:[],                                  lat:17.6652,lon:82.6143,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'bhogapuram',   name:'Bhogapuram',             aliases:[],                                  lat:18.0320,lon:83.5040,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'kasimkota',    name:'Kasimkota',              aliases:[],                                  lat:17.6743,lon:83.1336,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'nakkapalle',   name:'Nakkapalle',             aliases:[],                                  lat:17.7570,lon:83.0610,zone:'wider',inGVMC:false,status:'verified'},
+  {id:'kotauratla',   name:'Kotauratla',             aliases:[],                                  lat:18.0690,lon:83.0130,zone:'wider',inGVMC:false,status:'verified'},
+];
+
+const ZONE_LBL = {
+  central:'Central & East',
+  north:  'North & Coast',
+  south:  'South & Industrial',
+  west:   'West & Outer',
+  wider:  'Wider Region',
+};
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let curProfile  = 'general';
+let curRisk     = null;
+let curWeather  = null;
+let curLocId    = null;
+let activeTab   = 'all';
+let filterQ     = '';
+
+// ════════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════════
+const GEO_API = 'https://geocoding-api.open-meteo.com/v1/search';
+const WX_API  = 'https://api.open-meteo.com/v1/forecast';
+
+// ════════════════════════════════════════════════════════
+//  WMO CODES
+// ════════════════════════════════════════════════════════
+const WMO={
+  0:['Clear Sky','☀️'],1:['Mainly Clear','🌤️'],2:['Partly Cloudy','⛅'],3:['Overcast','☁️'],
+  45:['Foggy','🌫️'],48:['Icy Fog','🌫️'],
+  51:['Light Drizzle','🌦️'],53:['Moderate Drizzle','🌦️'],55:['Dense Drizzle','🌧️'],
+  61:['Slight Rain','🌧️'],63:['Moderate Rain','🌧️'],65:['Heavy Rain','🌧️'],
+  71:['Slight Snow','❄️'],73:['Moderate Snow','❄️'],75:['Heavy Snow','🌨️'],77:['Snow Grains','🌨️'],
+  80:['Slight Showers','🌦️'],81:['Moderate Showers','🌧️'],82:['Violent Showers','⛈️'],
+  85:['Snow Showers','🌨️'],86:['Heavy Snow Showers','🌨️'],
+  95:['Thunderstorm','⛈️'],96:['Thunderstorm + Hail','⛈️'],99:['Thunderstorm + Hail','⛈️'],
+};
+const wmoLbl = c => WMO[c] ?? ['Unknown','🌡️'];
+
+// ════════════════════════════════════════════════════════
+//  PROFILES
+// ════════════════════════════════════════════════════════
+const PROFILES={
+  general:{label:'General Public'},
+  student:{label:'Student'},
+  outdoor:{label:'Outdoor Worker'},
+  elderly:{label:'Elderly Person'},
+  child:  {label:'Child / Parent'},
+};
+
+// ════════════════════════════════════════════════════════
+//  RECOMMENDATIONS  (unchanged from reviewed version)
+// ════════════════════════════════════════════════════════
+const RECS={
+  general:{
+    LOW:[
+      {icon:'💧',title:'Stay hydrated',text:"Drink water regularly throughout the day, even if you don't feel thirsty."},
+      {icon:'🕶️',title:'Use sun protection',text:'Wear sunscreen (SPF 30+) and sunglasses when outdoors.'},
+      {icon:'🌳',title:'Enjoy outdoor time',text:'Conditions are mild — outdoor activities are generally fine.'},
+    ],
+    MODERATE:[
+      {icon:'💧',title:'Drink more water',text:'Increase your water intake throughout the day. Most adults need more in warm weather — individual needs vary.'},
+      {icon:'🏠',title:'Use shade and cool spaces',text:'Rest in shaded or air-conditioned areas during midday (11am–3pm).'},
+      {icon:'👕',title:'Dress for the heat',text:'Wear light-coloured, loose, breathable clothing.'},
+      {icon:'🌡️',title:'Watch for heat signs',text:'If you feel dizzy, nauseous, or unusually tired, move to a cooler place immediately.'},
+    ],
+    HIGH:[
+      {icon:'🚫',title:'Avoid midday sun',text:'Stay indoors between 11am and 4pm if at all possible.'},
+      {icon:'💧',title:'Hydrate regularly',text:'Drink water frequently and in small amounts. Avoid alcohol and sugary drinks.'},
+      {icon:'📞',title:'Check on neighbours',text:'Check in on people who live alone or may need help.'},
+      {icon:'🧊',title:'Cool down actively',text:'Use fans, cool showers, or damp cloths to lower body temperature.'},
+      {icon:'🚨',title:'Know the warning signs',text:'Seek medical help if you experience confusion, rapid heartbeat, or hot, dry skin.'},
+    ],
+    EXTREME:[
+      {icon:'🔴',title:'Stay inside',text:'Remain in the coolest available indoor space. This is a dangerous heat event.'},
+      {icon:'💧',title:'Drink water frequently',text:"Sip water regularly and often — do not wait until you feel thirsty. Individual fluid needs vary."},
+      {icon:'🏥',title:'Emergency signs',text:'Call emergency services for confusion, loss of consciousness, or very high body temperature (above 40°C).'},
+      {icon:'🐾',title:'Protect animals',text:'Keep pets indoors with water. Never leave them in parked vehicles.'},
+      {icon:'📡',title:'Follow official alerts',text:'Monitor your local emergency broadcast and health authority for official guidance.'},
+    ],
+  },
+  student:{
+    LOW:[
+      {icon:'🎒',title:'Carry a water bottle',text:'Keep a reusable bottle in your bag and refill it throughout the day.'},
+      {icon:'🌳',title:'Outdoor activities are fine',text:'Enjoy sports and activities — conditions are comfortable.'},
+    ],
+    MODERATE:[
+      {icon:'💧',title:'Hydrate between classes',text:"Drink water at every break. Sugary or caffeinated drinks don't replace water."},
+      {icon:'🏃',title:'Time outdoor sports carefully',text:'Do PE or sports early morning or late afternoon, not during peak heat.'},
+      {icon:'🧢',title:'Wear a hat',text:'A wide-brimmed hat significantly reduces heat exposure.'},
+    ],
+    HIGH:[
+      {icon:'🏫',title:'Stay in cool classrooms',text:'Use air-conditioned or shaded areas during free periods.'},
+      {icon:'💧',title:'Keep drinking water',text:'Drink water regularly throughout the day, even indoors — dehydration can affect concentration.'},
+      {icon:'🚫',title:'Skip midday outdoor sports',text:'Outdoor physical activity between 11am–4pm is risky in these conditions.'},
+      {icon:'🌡️',title:'Recognise heat exhaustion',text:'Heavy sweating, weakness and cold, pale, clammy skin = heat exhaustion. Rest in a cool area and tell an adult.'},
+    ],
+    EXTREME:[
+      {icon:'🏫',title:'Remain indoors all day',text:'All outdoor activities should be cancelled. Stay inside in the coolest space available.'},
+      {icon:'📞',title:'Tell a teacher or adult',text:"If you feel unwell — hot, confused, or unable to sweat — tell an adult immediately."},
+      {icon:'💧',title:'Keep drinking water',text:"Sip water regularly throughout the day. Don't wait until you feel thirsty."},
+    ],
+  },
+  outdoor:{
+    LOW:[
+      {icon:'💧',title:'Drink water regularly',text:"Drink water frequently during physical work outdoors — don't wait until you feel thirsty."},
+      {icon:'🧴',title:'Apply sunscreen',text:'Use SPF 30+ and reapply every 2 hours.'},
+    ],
+    MODERATE:[
+      {icon:'⏰',title:'Reschedule heavy work',text:'Do the most physically demanding tasks before 10am or after 4pm.'},
+      {icon:'💧',title:'Drink water frequently',text:'Sip water often throughout the day. Isotonic drinks can help replace salts lost through heavy sweating.'},
+      {icon:'🧢',title:'Full sun protection',text:'Hat, UV-blocking clothing, and sunscreen at all times.'},
+      {icon:'🌡️',title:'Rest in shade regularly',text:'Take short rest breaks in the shade every hour.'},
+    ],
+    HIGH:[
+      {icon:'🚫',title:'Avoid peak heat hours',text:'No strenuous outdoor work between 11am and 4pm unless unavoidable.'},
+      {icon:'💧',title:'Drink water often',text:'Sip water regularly and frequently — do not wait for thirst. Dark yellow urine is a sign of dehydration.'},
+      {icon:'👷',title:'Buddy system',text:'Work with a partner who can spot heat illness symptoms in you.'},
+      {icon:'🌡️',title:'Know the symptoms',text:'Cramps, dizziness, or nausea = stop work immediately, move to shade, drink water, and call for help if needed.'},
+      {icon:'📋',title:'Employer duty',text:'Your employer is legally required to provide shade, water, and rest breaks in hot conditions. Request them.'},
+    ],
+    EXTREME:[
+      {icon:'🔴',title:'Do not work outdoors',text:'Extreme heat is a serious occupational hazard. Outdoor work should be suspended.'},
+      {icon:'📞',title:'Know the emergency plan',text:"Know your site's heat emergency plan. Heatstroke is a medical emergency — call services immediately if suspected."},
+      {icon:'🏥',title:'Heatstroke signs',text:'Hot dry skin, confusion, or very high body temperature = call emergency services immediately. Do not delay.'},
+    ],
+  },
+  elderly:{
+    LOW:[
+      {icon:'💧',title:"Don't forget to drink water",text:'Older adults may have a reduced sense of thirst — set a reminder to drink water regularly throughout the day.'},
+      {icon:'🌤️',title:'Gentle outdoor time is fine',text:'Enjoy a walk in the morning or evening in these mild conditions.'},
+    ],
+    MODERATE:[
+      {icon:'💧',title:'Drink water regularly',text:"Set an alarm as a reminder to drink water throughout the day — don't wait for thirst."},
+      {icon:'🏠',title:'Stay in cool rooms',text:'Keep curtains closed on the sunny side of your home to reduce indoor temperature.'},
+      {icon:'💊',title:'Check your medications',text:'Some medicines affect how the body handles heat. Ask your pharmacist or GP if unsure.'},
+      {icon:'📞',title:'Check in with someone',text:"Let a family member or neighbour know how you're doing during a heat event."},
+    ],
+    HIGH:[
+      {icon:'🏠',title:'Stay indoors during peak heat',text:'Avoid going out between 11am and 4pm. This is the highest-risk period.'},
+      {icon:'💧',title:'Keep drinking water',text:"Drink water regularly even if you don't feel thirsty. Dehydration in older adults can develop quickly."},
+      {icon:'🧊',title:'Cool down your home',text:'Use fans, damp towels, or visit a cool public space (library, shopping centre).'},
+      {icon:'📞',title:'Daily contact',text:'Someone should check on you (or you check on an elderly neighbour) every day during a heat event.'},
+      {icon:'🏥',title:'Warning signs',text:'Confusion, rapid weak pulse, or hot dry skin = call an ambulance immediately.'},
+    ],
+    EXTREME:[
+      {icon:'🔴',title:'High-risk group — stay indoors',text:'Older adults are among those most at risk during extreme heat. Stay in the coolest indoor space available.'},
+      {icon:'📞',title:'Contact someone now',text:'If you live alone, call or text a family member or friend to check in regularly today.'},
+      {icon:'🏥',title:'Go somewhere cool if needed',text:'If you cannot cool your home adequately, consider going to an air-conditioned public space.'},
+      {icon:'💊',title:'Monitor medication effects',text:'Some heart or blood pressure medications may increase heat risk. Contact your doctor or pharmacist if concerned.'},
+    ],
+  },
+  child:{
+    LOW:[
+      {icon:'🌊',title:'Great day to play outside',text:'Mild conditions — outdoor play is fine. Keep water available and offer it regularly.'},
+      {icon:'🧴',title:'Always use sunscreen on children',text:'Apply SPF 30+ to all exposed skin before going outside.'},
+    ],
+    MODERATE:[
+      {icon:'💧',title:'Offer water frequently',text:'Children often forget to drink when playing. Offer water regularly — individual needs vary with age and activity.'},
+      {icon:'🧢',title:'Hat and shade are essential',text:'Children can overheat faster than adults. Always use a hat and seek shade.'},
+      {icon:'⏰',title:'Schedule play in cooler hours',text:'Early morning or after 4pm is much safer for active outdoor play.'},
+      {icon:'🚗',title:'Never leave children in cars',text:'A parked car in sunlight can reach dangerous temperatures very quickly. Always check the back seat.'},
+    ],
+    HIGH:[
+      {icon:'🏠',title:'Keep children indoors during peak heat',text:'No outdoor activities between 11am and 4pm. Indoor play or rest is best.'},
+      {icon:'💧',title:'Offer water often',text:'Encourage frequent small sips throughout the day. Keep a water bottle with them at all times.'},
+      {icon:'🧊',title:'Cool baths can help',text:"A lukewarm (not cold) bath can help reduce a child's body temperature if they seem overheated."},
+      {icon:'🌡️',title:'Heat exhaustion in children',text:"Signs include pale, clammy skin; weakness; headache; or nausea. Move to a cool area, offer water, and seek medical advice if they don't improve."},
+      {icon:'🚗',title:'Zero tolerance for hot cars',text:'A child left in a hot car is in serious danger. Always check the back seat before leaving your vehicle.'},
+    ],
+    EXTREME:[
+      {icon:'🔴',title:'Children need extra protection',text:'Keep children in the coolest indoor space available throughout the day.'},
+      {icon:'🏥',title:'Heatstroke in children',text:'Confusion, hot dry skin, or rapid breathing = potential medical emergency. Call emergency services immediately.'},
+      {icon:'💧',title:'Keep offering fluids',text:"Offer water or diluted juice frequently in small amounts. Don't force large quantities at once."},
+      {icon:'🚫',title:'Cancel all outdoor plans',text:'No school sports, playground visits, or outdoor travel today.'},
+    ],
+  },
+};
+
+// ════════════════════════════════════════════════════════
+//  RISK SCREENING (app-defined communication bands; not official alerts)
+// ════════════════════════════════════════════════════════
+function calcRisk(temp, hum, atOver) {
+  if (!isFinite(temp) || !isFinite(hum)) return null;
+  let at, src;
+  if (atOver != null && isFinite(atOver)) { at = atOver; src = 'api'; }
+  else {
+    const vp = (hum/100)*6.105*Math.exp(17.27*temp/(237.7+temp));
+    at = temp + 0.33*vp - 4.0; src = 'calc';
+  }
+  const lvl = at>=42?'EXTREME':at>=35?'HIGH':at>=27?'MODERATE':'LOW';
+  const diff = +(at-temp).toFixed(1);
+  const dn = diff>0
+    ? `The apparent temperature is about ${diff}°C above the air temperature.`
+    : diff<0
+    ? `The apparent temperature is about ${Math.abs(diff)}°C below the air temperature.`
+    : 'Air temperature and apparent temperature are similar.';
+  let ctx;
+  if (lvl==='EXTREME') ctx=`The app's Extreme screening band is active at an apparent temperature of ${at.toFixed(1)}°C. ${dn} Reduce outdoor exposure where possible, use a cool space, and follow official weather and health advice. Extra caution is important for older adults, young children, people with health conditions, and outdoor workers.`;
+  else if (lvl==='HIGH') ctx=`The app's High screening band is active at an apparent temperature of ${at.toFixed(1)}°C. ${dn} Limit strenuous activity in the heat, take breaks in shade or a cool place, and stay hydrated. People more sensitive to heat may need extra precautions.`;
+  else if (lvl==='MODERATE') ctx=`The app's Moderate screening band is active at an apparent temperature of ${at.toFixed(1)}°C. ${dn} Take normal heat precautions, stay hydrated, and take more frequent breaks if you are sensitive to heat or doing physical work.`;
+  else ctx=`The app's Low screening band is active at an apparent temperature of ${at.toFixed(1)}°C. ${dn} Continue normal hydration and sun protection, especially during prolonged outdoor activity.`;
+  return {lvl, ctx, at, airTemp:temp, hum, src};
+}
+
+// ════════════════════════════════════════════════════════
+//  GEOCODING
+// ════════════════════════════════════════════════════════
+async function geocode(q) {
+  const r = await fetch(`${GEO_API}?name=${encodeURIComponent(q)}&count=5&language=en&format=json`);
+  if (!r.ok) throw new Error(`Geocoding ${r.status}`);
+  const d = await r.json();
+  if (!d.results?.length) return [];
+  return d.results.map(x=>({
+    id:x.id,name:x.name,country:x.country??'',
+    region:x.admin1??'',latitude:x.latitude,
+    longitude:x.longitude,timezone:x.timezone??'UTC',
+  }));
+}
+
+// ════════════════════════════════════════════════════════
+//  WEATHER FETCH
+// ════════════════════════════════════════════════════════
+async function fetchWx(loc) {
+  const p = new URLSearchParams({
+    latitude:loc.latitude, longitude:loc.longitude,
+    current:'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,precipitation',
+    daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+    forecast_days:4,
+    timezone:loc.timezone||'Asia/Kolkata',
+    wind_speed_unit:'kmh',temperature_unit:'celsius',
+  });
+  const r = await fetch(`${WX_API}?${p}`);
+  if (!r.ok) throw new Error(`Weather ${r.status}`);
+  const d = await r.json();
+  const c=d.current, dy=d.daily;
+  const fc=[];
+  for (let i=1;i<=3;i++){
+    if (!dy.time[i]) break;
+    const dt=new Date(dy.time[i]+'T12:00:00');
+    const [desc,ico]=wmoLbl(dy.weather_code[i]);
+    fc.push({day:dt.toLocaleDateString('en-US',{weekday:'short'}),ico,desc,
+      hi:Math.round(dy.temperature_2m_max[i]),
+      lo:Math.round(dy.temperature_2m_min[i]),
+      rain:dy.precipitation_probability_max?.[i]??null});
+  }
+  const [cond,cico]=wmoLbl(c.weather_code);
+  return {
+    city:loc.name||loc.displayName||'Vizag',
+    country:loc.country||'India',
+    region:loc.region||'Andhra Pradesh',
+    temp:Math.round(c.temperature_2m),
+    hum:Math.round(c.relative_humidity_2m),
+    feel:Math.round(c.apparent_temperature),
+    feelRaw:c.apparent_temperature,
+    cond,cico,
+    precip:c.precipitation??null,
+    fc,
+    at:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+  };
+}
+
+// ════════════════════════════════════════════════════════
+//  LOCALITY GRID
+// ════════════════════════════════════════════════════════
+function buildGrids(){
+  ['central','north','south','west','wider'].forEach(z=>{
+    const g=document.getElementById('grid-'+z);
+    if (g) g.innerHTML=LOCS.filter(l=>l.zone===z).map(locBtn).join('');
+  });
+  buildAll();
+}
+function buildAll(){
+  const g=document.getElementById('grid-all');
+  if (!g) return;
+  const q=filterQ.toLowerCase();
+  const list=q?LOCS.filter(l=>l.name.toLowerCase().includes(q)||l.aliases.some(a=>a.includes(q))):LOCS;
+  g.innerHTML=list.map(locBtn).join('');
+  const el=document.getElementById('locCount');
+  if (el) el.textContent=`${list.length} ${list.length===1?'locality':'localities'}`;
+}
+function locBtn(l){
+  const sel=l.id===curLocId;
+  const note=!l.inGVMC?'<span class="lb-note">Wider region</span>':'';
+  const unv=l.status!=='verified'?'<span class="lb-note">Approx. coordinates</span>':'';
+  return `<button class="lbtn${sel?' sel':''}" onclick="loadLoc('${l.id}')"
+    type="button" aria-pressed="${sel}" data-lid="${l.id}"
+    aria-label="${esc(l.name)}, ${ZONE_LBL[l.zone]}${!l.inGVMC?', wider region':''}${l.status!=='verified'?', approximate coordinates':''}">
+    <span class="lb-name">${esc(l.name)}</span>
+    <span class="lb-zone">${ZONE_LBL[l.zone]}</span>
+    ${note}${unv}
+  </button>`;
+}
+function filterLocs(q){
+  filterQ=q.trim();
+  const explorer=document.getElementById('explorerSec');
+  if(explorer) explorer.classList.toggle('search-open', filterQ.length>0);
+  const title=document.getElementById('explTitle');
+  const desc=document.querySelector('.explorer-desc');
+  if(title) title.textContent=filterQ ? 'Matching localities' : 'Search Greater Vizag';
+  if(desc) desc.textContent=filterQ ? 'Choose a locality to load its forecast.' : 'Type a locality name above to see matches.';
+  if(filterQ) switchTab('all');
+  buildAll();
+}
+function switchTab(z){
+  activeTab=z;
+  document.querySelectorAll('.etab').forEach(b=>{
+    const on=b.id==='tab-'+z;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-selected',on?'true':'false');
+  });
+  document.querySelectorAll('.zpanel').forEach(p=>{
+    p.classList.toggle('on',p.id==='zp-'+z);
+  });
+  if(z==='all') buildAll();
+}
+
+// ════════════════════════════════════════════════════════
+//  LOAD LOCALITY
+// ════════════════════════════════════════════════════════
+async function loadLoc(id){
+  const loc=LOCS.find(l=>l.id===id);
+  if(!loc) return;
+  curLocId=id;
+  curWeather=null;
+  curRisk=null;
+
+  // Update buttons
+  document.querySelectorAll('.lbtn').forEach(b=>{
+    const me=b.dataset.lid===id;
+    b.classList.toggle('sel',me);
+    b.setAttribute('aria-pressed',me?'true':'false');
+  });
+
+  // Update locality banner
+  document.getElementById('lbName').textContent=loc.name;
+  document.getElementById('lbSub').textContent=
+    `${ZONE_LBL[loc.zone]} · ${loc.inGVMC?'GVMC':'Wider Metro'} · Andhra Pradesh`;
+  const badge=document.getElementById('lbBadge');
+  badge.textContent=loc.inGVMC?'GVMC':'Wider Region';
+  badge.className='lb-badge '+(loc.inGVMC?'lb-badge-gvmc':'lb-badge-wide');
+  document.getElementById('locBanner').classList.add('vis');
+
+  // Update nav chip
+  document.getElementById('navLocName').textContent=loc.name;
+  document.getElementById('navLocWrap').classList.add('visible');
+
+  // Scroll
+  document.getElementById('wxSection').scrollIntoView({behavior:'smooth',block:'start'});
+
+  const locObj={
+    name:loc.name,country:'India',
+    region:`${ZONE_LBL[loc.zone]}, Andhra Pradesh`,
+    latitude:loc.lat,longitude:loc.lon,
+    timezone:'Asia/Kolkata',displayName:loc.name,
+  };
+
+  clearErr(); hidePicker(); setLoad(true); hideBanners();
+  document.getElementById('weatherContent').innerHTML='<div class="empty"><span class="empty-ico">🌤️</span><p class="empty-h">Loading selected locality…</p></div>';
+  document.getElementById('riskContent').innerHTML='<div class="empty"><p class="empty-h">Updating assessment…</p></div>';
+  document.getElementById('recList').innerHTML='';
+  try {
+    const wx=await fetchWx(locObj);
+    setLoad(false); curWeather=wx;
+    renderWx(wx,loc);
+    const risk=calcRisk(wx.temp,wx.hum,wx.feelRaw);
+    curRisk=risk?risk.lvl:null;
+    renderRisk(risk);
+    if(risk) renderRecs(curProfile,risk.lvl);
+    showBanner('live');
+  } catch(e) {
+    setLoad(false); showBanner('err');
+    curWeather=null; curRisk=null;
+    document.getElementById('weatherContent').innerHTML='<div class="empty"><span class="empty-ico">⚠️</span><p class="empty-h">Weather unavailable</p><p class="empty-p">No current forecast is being shown for this locality.</p></div>';
+    document.getElementById('riskContent').innerHTML='<div class="empty"><p class="empty-h">Assessment unavailable</p><p class="empty-p">Select this locality again later to retry.</p></div>';
+    document.getElementById('recList').innerHTML='';
+    showErr('Weather data could not be loaded for this locality. Please try again.');
+    console.error('[VizagAura] locality wx error:',e);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SUPPORTED LOCALITY SEARCH
+// ════════════════════════════════════════════════════════
+async function startSearch(){
+  const raw=document.getElementById('cityInput').value.trim();
+  if(!raw){showErr('Enter a Greater Vizag locality to search.');return}
+  if(raw.length<2){showErr('Please enter at least 2 characters.');return}
+  const q=raw.toLocaleLowerCase();
+  const exact=LOCS.filter(l=>l.name.toLocaleLowerCase()===q||l.aliases.some(a=>a.toLocaleLowerCase()===q));
+  if(exact.length===1){
+    clearErr();
+    await loadLoc(exact[0].id);
+    return;
+  }
+  const partial=LOCS.filter(l=>l.name.toLocaleLowerCase().includes(q)||l.aliases.some(a=>a.toLocaleLowerCase().includes(q)));
+  if(partial.length===1){
+    clearErr();
+    await loadLoc(partial[0].id);
+    return;
+  }
+  if(partial.length>1){
+    showErr('Several localities match. Choose the correct match shown below the search box.');
+    return;
+  }
+  showErr('No matching locality found. Try another spelling or a nearby locality name.');
+}
+async function loadGlobal(loc){
+  hidePicker(); setLoad(true); hideBanners();
+  try {
+    const wx=await fetchWx(loc);
+    setLoad(false); curWeather=wx;
+    renderWx(wx,null);
+    const risk=calcRisk(wx.temp,wx.hum,wx.feelRaw);
+    curRisk=risk?risk.lvl:null;
+    renderRisk(risk);
+    if(risk) renderRecs(curProfile,risk.lvl);
+    showBanner('live');
+  } catch(e){
+    setLoad(false); showBanner('err');
+    showErr('Weather data could not be loaded. Please try again.');
+    console.error('[VizagAura] global wx error:',e);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  PICKER
+// ════════════════════════════════════════════════════════
+function showPicker(locs){
+  const card=document.getElementById('pickerCard');
+  const list=document.getElementById('pickerList');
+  list.innerHTML=locs.map((l,i)=>`
+    <li class="pitem"
+        onclick="pick(${i})"
+        onkeydown="if(event.key==='Enter'||event.key===' ')pick(${i})"
+        data-i="${i}" role="option" tabindex="0"
+        aria-label="${esc(l.name)}, ${esc([l.region,l.country].filter(Boolean).join(', '))}">
+      <div>
+        <div class="pi-name">${esc(l.name)}</div>
+        <div class="pi-reg">${esc([l.region,l.country].filter(Boolean).join(', '))}</div>
+      </div>
+      <span class="pi-arr" aria-hidden="true">→</span>
+    </li>`).join('');
+  list._locs=locs;
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function hidePicker(){document.getElementById('pickerCard').style.display='none'}
+function pick(i){const l=document.getElementById('pickerList')._locs?.[i];if(l)loadGlobal(l)}
+
+// ════════════════════════════════════════════════════════
+//  RENDER WEATHER
+// ════════════════════════════════════════════════════════
+function renderWx(w,loc){
+  const reg=loc
+    ? `${ZONE_LBL[loc.zone]} · ${loc.inGVMC?'GVMC':'Greater Vizag Metro'} · Andhra Pradesh`
+    : [w.region,w.country].filter(Boolean).join(', ');
+
+  const fcHTML=w.fc.map(f=>`
+    <div class="fc-c">
+      <div class="fc-d">${f.day}</div>
+      <div class="fc-i" aria-hidden="true">${f.ico}</div>
+      <div class="fc-hi">${f.hi}°</div>
+      <div class="fc-lo">${f.lo}°</div>
+      ${f.rain!==null?`<div class="fc-r" aria-label="Rain ${f.rain}%">💧 ${f.rain}%</div>`:''}
+    </div>`).join('');
+
+  const precipNote=w.precip!==null&&w.precip>0
+    ? `<div class="precip-note">💧 Current precipitation: ${w.precip.toFixed(1)} mm</div>` : '';
+
+  document.getElementById('weatherContent').innerHTML=`
+    <div class="city-hd">
+      <div>
+        <div class="city-hd-name">${esc(w.city)}</div>
+        <div class="city-hd-reg">${esc(reg)}</div>
+      </div>
+      <div class="city-hd-time">Updated ${w.at}</div>
+    </div>
+    <div class="temp-hero">
+      <div>
+        <span class="temp-cond-icon" aria-hidden="true">${w.cico}</span>
+      </div>
+      <div class="temp-big">${w.temp}<span class="deg">°C</span></div>
+      <div class="temp-side">
+        <div class="temp-cond">${esc(w.cond)}</div>
+        <div class="temp-feel">Feels like ${w.feel}°C</div>
+      </div>
+    </div>
+    <div class="wx-row" role="list" aria-label="Weather statistics">
+      <div class="wx-c" role="listitem">
+        <div class="wx-c-lbl">Temperature</div>
+        <div class="wx-c-val">${w.temp}<span class="wx-c-unit">°C</span></div>
+        <div class="wx-c-sub">Air temp</div>
+      </div>
+      <div class="wx-c" role="listitem">
+        <div class="wx-c-lbl">Humidity</div>
+        <div class="wx-c-val">${w.hum}<span class="wx-c-unit">%</span></div>
+        <div class="wx-c-sub">Relative</div>
+      </div>
+      <div class="wx-c" role="listitem">
+        <div class="wx-c-lbl">Feels Like</div>
+        <div class="wx-c-val">${w.feel}<span class="wx-c-unit">°C</span></div>
+        <div class="wx-c-sub">Apparent temp</div>
+      </div>
+    </div>
+    ${precipNote}
+    <div style="padding:12px 20px 4px">
+      <p class="caps" style="margin-bottom:7px">3-Day Outlook</p>
+    </div>
+    <div class="fc" role="list" aria-label="3-day forecast">${fcHTML}</div>
+    <div class="attr-row">
+      <span class="attr-dot" aria-hidden="true"></span>
+      Open-Meteo forecast model ·
+      ${loc?`${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`:'geocoded'}
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER RISK
+// ════════════════════════════════════════════════════════
+function renderRisk(r){
+  if(!r){
+    document.getElementById('riskContent').innerHTML=`
+      <div class="empty" style="padding:28px 0 10px">
+        <span class="empty-ico" aria-hidden="true">⚠️</span>
+        <p class="empty-h">Assessment unavailable</p>
+        <p class="empty-p">Weather data was incomplete or could not be retrieved. Please try again.</p>
+      </div>`;
+    return;
+  }
+  const srcNote=r.src==='calc'
+    ?'<span style="color:var(--t3);font-size:.65rem"> (estimated locally)</span>':'';
+
+  document.getElementById('riskContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div class="rbadge rbadge-${r.lvl}">
+        <span class="rdot rdot-${r.lvl}" aria-hidden="true"></span>
+        ${riskLbl(r.lvl)}
+      </div>
+    </div>
+    <div class="r-mrow" role="list" aria-label="Measurements used">
+      <div class="r-mc" role="listitem">
+        <div class="r-mc-lbl">Apparent temp</div>
+        <div class="r-mc-val">${r.at.toFixed(1)}<span class="r-mc-unit">°C</span></div>
+        <div class="r-mc-note">Basis for screening${srcNote}</div>
+      </div>
+      <div class="r-mc" role="listitem">
+        <div class="r-mc-lbl">Air temperature</div>
+        <div class="r-mc-val">${r.airTemp}<span class="r-mc-unit">°C</span></div>
+        <div class="r-mc-note">At 2 m above ground</div>
+      </div>
+      <div class="r-mc" role="listitem">
+        <div class="r-mc-lbl">Humidity</div>
+        <div class="r-mc-val">${r.hum}<span class="r-mc-unit">%</span></div>
+        <div class="r-mc-note">Relative humidity</div>
+      </div>
+    </div>
+    <div class="r-ctx">${r.ctx}</div>
+    <div class="r-disc">
+      <strong>How this screening works:</strong>
+      The apparent temperature comes from Open-Meteo's forecast API, which combines air temperature,
+      humidity, wind and radiation. The four categories (Low / Moderate / High / Extreme) are
+      general public-communication bands.
+      They are <strong>not a validated clinical protocol</strong>, not an official heat-health alert,
+      and not a substitute for guidance from your local health or emergency authority.
+      Individual risk depends on health status, activity level, acclimatisation, and access to shade and water.
+    </div>
+  `;
+}
+const riskLbl=l=>({LOW:'Low',MODERATE:'Moderate',HIGH:'High',EXTREME:'Extreme'}[l]);
+
+// ════════════════════════════════════════════════════════
+//  RENDER RECOMMENDATIONS
+// ════════════════════════════════════════════════════════
+function renderRecs(prof,lvl){
+  const recs=RECS[prof]?.[lvl];
+  if(!recs) return;
+  document.getElementById('profileLabel').textContent=PROFILES[prof].label;
+  document.getElementById('recList').innerHTML=recs.map(r=>`
+    <li class="ritem">
+      <div class="rico" aria-hidden="true">${r.icon}</div>
+      <div class="rtitle">${r.title}</div>
+      <div class="rbody">${r.text}</div>
+    </li>`).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  PROFILE SELECTION
+// ════════════════════════════════════════════════════════
+function selectProfile(p){
+  curProfile=p;
+  document.querySelectorAll('.pbtn').forEach(b=>{
+    const on=b.dataset.profile===p;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-checked',on?'true':'false');
+  });
+  if(curRisk) renderRecs(p,curRisk);
+  else document.getElementById('profileLabel').textContent=PROFILES[p].label;
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function setLoad(on){
+  const sw=document.getElementById('spinnerWrap');
+  const wc=document.getElementById('weatherContent');
+  if(on){sw.classList.add('vis');wc.style.display='none'}
+  else  {sw.classList.remove('vis');wc.style.display='block'}
+  document.getElementById('searchBtn').disabled=on;
+}
+function showErr(m){const e=document.getElementById('errorMsg');e.textContent=m;e.style.display='block'}
+function clearErr(){document.getElementById('errorMsg').style.display='none'}
+function hideBanners(){['bannerLive','bannerError','bannerDemo'].forEach(id=>document.getElementById(id).classList.remove('vis'))}
+function showBanner(t){hideBanners();const m={live:'bannerLive',err:'bannerError',demo:'bannerDemo'};document.getElementById(m[t])?.classList.add('vis')}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// Scroll helpers
+function scrollToExplorer(){document.getElementById('explorerSec').scrollIntoView({behavior:'smooth'})}
+function scrollToWeather() {document.getElementById('wxSection').scrollIntoView({behavior:'smooth'})}
+function scrollToRisk()    {document.getElementById('riskCard').scrollIntoView({behavior:'smooth'})}
+
+// ════════════════════════════════════════════════════════
+//  KEYBOARD
+// ════════════════════════════════════════════════════════
+document.getElementById('cityInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') startSearch();
+});
+document.getElementById('navLocWrap').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' ') scrollToExplorer();
+});
+
+// ════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════
+(function init(){
+  buildGrids();
+  document.getElementById('recList').innerHTML=`
+    <li class="ritem">
+      <div class="rico" aria-hidden="true">📍</div>
+      <div class="rtitle">Select a locality first</div>
+      <div class="rbody">Pick a supported neighbourhood from the Vizag explorer above to see personalised heat safety recommendations.</div>
+    </li>`;
+})();
+</script>
+</body>
+</html>
